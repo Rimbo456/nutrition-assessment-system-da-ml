@@ -1,6 +1,6 @@
 """
 Training configuration for FoodSeg103 Semantic Segmentation
-OPTIMIZED FOR GPU TRAINING - Best settings for production
+OPTIMIZED FOR 6GB GPU (RTX 3050, GTX 1060 6GB, etc.)
 """
 
 import os
@@ -14,29 +14,29 @@ TEST_MANIFEST = os.path.join(DATA_ROOT, "manifest_test.csv")
 CHECKPOINT_DIR = os.path.join(PROJECT_ROOT, "checkpoints")
 LOG_DIR = os.path.join(PROJECT_ROOT, "logs")
 
-# Model - Best architecture for semantic segmentation
+# Model - Balanced for 6GB VRAM
 MODEL_NAME = "DeepLabV3+"  # State-of-the-art for segmentation
-ENCODER = "resnet34"  # Lighter than resnet50, fits in 6GB GPU (change to resnet50 for 8GB+)
+ENCODER = "resnet34"  # Lighter than resnet50, fits in 6GB
 ENCODER_WEIGHTS = "imagenet"  # Use pretrained weights
 
-# Training - OPTIMAL for 6GB GPU (RTX 3050, GTX 1060)
+# Training - OPTIMIZED FOR 6GB GPU
 NUM_CLASSES = 104  # 0=background + 103 food classes
-IMG_SIZE = (512, 512)  # Full resolution for best results
-BATCH_SIZE = 8  # For 6GB GPU (use 16 for 8GB+, 4 for 4GB)
+IMG_SIZE = (512, 512)  # Full resolution
+BATCH_SIZE = 8  # Reduced from 16 to fit in 6GB VRAM
 NUM_EPOCHS = 100  # Enough for convergence
-LEARNING_RATE = 2e-4  # Adjusted for smaller batch size
+LEARNING_RATE = 2e-4  # Slightly lower LR for smaller batch
 WEIGHT_DECAY = 1e-4  # Regularization
 
 # Optimizer & Scheduler
-OPTIMIZER = "AdamW"  # Best optimizer for transformers/deep networks
+OPTIMIZER = "AdamW"  # Best optimizer for deep networks
 SCHEDULER = "CosineAnnealingWarmRestarts"  # Best scheduler for long training
 
 # Loss function
 LOSS = "CrossEntropy"  # Standard for semantic segmentation
 
-# Hardware - GPU settings (will auto-detect)
+# Hardware - GPU settings
 DEVICE = "cuda"  # Will fallback to CPU if CUDA unavailable
-NUM_WORKERS = 2  # Reduced for 6GB GPU (use 4 for 8GB+, 0 if Windows issues)
+NUM_WORKERS = 2  # Reduced for 6GB GPU to save system RAM
 PIN_MEMORY = True  # Faster data transfer to GPU
 
 # Logging
@@ -48,20 +48,11 @@ EARLY_STOPPING_PATIENCE = 15  # Stop if no improvement for 15 epochs
 SEED = 42
 
 # ============================================================================
-# Memory Usage for this config:
-# - DeepLabV3+ ResNet34: ~350 MB
-# - Batch (8 x 512x512): ~32 MB
-# - Optimizer state: ~1.5 GB
-# - Mixed precision: ~500 MB
-# TOTAL: ~2.4 GB (safe for 6GB GPU, leaves ~3.6GB buffer)
-#
-# For 4GB GPU: BATCH_SIZE=4, ENCODER="resnet18"
-# For 8GB+ GPU: BATCH_SIZE=16, ENCODER="resnet50"
-# ============================================================================
-# NOTES FOR CPU TRAINING:
-# ============================================================================
-# 1. Training will be MUCH slower on CPU (10-100x slower than GPU)
-# 2. One epoch might take 30-60 minutes on CPU vs 1-2 minutes on GPU
-# 3. This config is for TESTING the pipeline, not for actual training
-# 4. For production training, use GPU or cloud services (Google Colab, AWS, etc.)
+# Memory Usage Estimate for this config:
+# Model (DeepLabV3+ ResNet34): ~350 MB
+# Batch (8 x 512x512 RGB images): ~24 MB
+# Batch (8 x 512x512 masks): ~8 MB
+# Gradients + Optimizer state: ~1.5 GB
+# Mixed precision overhead: ~500 MB
+# TOTAL: ~2.4 GB (leaves ~3.6 GB buffer for PyTorch's memory allocator)
 # ============================================================================
