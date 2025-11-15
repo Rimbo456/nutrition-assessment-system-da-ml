@@ -103,6 +103,22 @@ class Food101NPreprocessor:
         
         return self.class_map
     
+    def _get_relative_path(self, full_path):
+        """
+        Convert absolute path thành relative path từ output_dir
+        
+        VD: d:/KLTN/food-101N/images/apple_pie/xxx.jpg
+        -> ../../food-101N/images/apple_pie/xxx.jpg
+        """
+        try:
+            full_path = Path(full_path)
+            # Tính relative path từ output_dir đến image
+            rel_path = os.path.relpath(full_path, self.output_dir)
+            return rel_path
+        except:
+            # Fallback: trả về absolute path nếu không convert được
+            return str(full_path)
+    
     def load_verified_data(self):
         """
         Load dữ liệu train/val với verification labels
@@ -110,6 +126,8 @@ class Food101NPreprocessor:
         verification_label:
             - 1 = Correct label (ảnh đúng với class)
             - 0 = Incorrect label (ảnh sai - noisy label)
+        
+        LƯU Ý: Lưu RELATIVE PATH để dễ chuyển máy
         """
         print("\n" + "=" * 80)
         print("BƯỚC 2: Load Verified Train/Val Data")
@@ -138,11 +156,14 @@ class Food101NPreprocessor:
                 class_name, img_key = img_path.split('/')
                 class_id = self.class_map['by_name'][class_name]
                 
-                # Full path
-                full_path = str(self.images_dir / class_name / img_key)
+                # Full path (absolute)
+                full_path = self.images_dir / class_name / img_key
+                
+                # Convert to relative path
+                relative_path = self._get_relative_path(full_path)
                 
                 self.train_data.append({
-                    'image_path': full_path,
+                    'image_path': relative_path,  # LƯU RELATIVE PATH
                     'class_id': class_id,
                     'class_name': class_name,
                     'verified': verification,
@@ -181,11 +202,14 @@ class Food101NPreprocessor:
                 class_name, img_key = img_path.split('/')
                 class_id = self.class_map['by_name'][class_name]
                 
-                # Full path
-                full_path = str(self.images_dir / class_name / img_key)
+                # Full path (absolute)
+                full_path = self.images_dir / class_name / img_key
+                
+                # Convert to relative path
+                relative_path = self._get_relative_path(full_path)
                 
                 self.val_data.append({
-                    'image_path': full_path,
+                    'image_path': relative_path,  # LƯU RELATIVE PATH
                     'class_id': class_id,
                     'class_name': class_name,
                     'verified': verification,

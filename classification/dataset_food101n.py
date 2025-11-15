@@ -51,6 +51,8 @@ class Food101NDataset(Dataset):
         
         # Load data list
         data_json_path = Path(data_json_path)
+        self.base_dir = data_json_path.parent  # Lưu base directory để resolve relative paths
+        
         with open(data_json_path, 'r', encoding='utf-8') as f:
             self.data_list = json.load(f)
         
@@ -125,8 +127,12 @@ class Food101NDataset(Dataset):
         """
         item = self.data_list[idx]
         
-        # Load image
+        # Load image - convert relative path to absolute
         image_path = item['image_path']
+        
+        # Nếu là relative path, convert thành absolute
+        if not Path(image_path).is_absolute():
+            image_path = self.base_dir / image_path
         
         try:
             # Đọc ảnh với PIL (đáng tin cậy hơn)
