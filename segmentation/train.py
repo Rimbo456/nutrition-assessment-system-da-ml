@@ -335,10 +335,20 @@ def main():
     # Metrics
     metrics = get_metrics()
     
-    # Enable mixed precision training on GPU
-    use_amp = device.type == 'cuda' and torch.cuda.is_available()
-    if use_amp:
-        print("✓ Mixed precision training enabled (faster on GPU)")
+    # Enable mixed precision training ONLY on GPU with CUDA
+    # Disable completely on CPU to avoid engine errors
+    use_amp = False
+    if torch.cuda.is_available() and device.type == 'cuda':
+        try:
+            # Test if AMP is actually available
+            test_scaler = torch.cuda.amp.GradScaler()
+            use_amp = True
+            print("✓ Mixed precision training enabled (faster on GPU)")
+        except Exception as e:
+            print(f"⚠️  Mixed precision not available: {e}")
+            use_amp = False
+    else:
+        print("⚠️  Mixed precision disabled (CPU mode)")
     
     # Training loop
     best_iou = 0.0

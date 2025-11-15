@@ -1,6 +1,27 @@
-# Core dependencies
-torch>=2.0.0
-torchvision>=0.15.0
+# ==============================================================================
+# PyTorch Installation - INSTALL SEPARATELY FIRST!
+# ==============================================================================
+# DO NOT use "pip install -r requirements.txt" for torch!
+# Install torch FIRST with the correct version for your hardware:
+#
+# For GPU (CUDA 11.8 - recommended):
+#   pip install torch torchvision --index-url https://download.pytorch.org/whl/cu118
+#
+# For GPU (CUDA 12.1):
+#   pip install torch torchvision --index-url https://download.pytorch.org/whl/cu121
+#
+# For CPU only (slow, not recommended):
+#   pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
+#
+# Then install other dependencies:
+#   pip install -r requirements.txt
+#
+# Verify installation:
+#   python check_installation.py
+# ==============================================================================
+
+# torch>=2.0.0  # COMMENTED - Install separately (see above)
+# torchvision>=0.15.0  # COMMENTED - Install separately (see above)
 
 # Segmentation models
 segmentation-models-pytorch>=0.3.3
