@@ -2,6 +2,7 @@
 PyTorch Dataset for FoodSeg103 preprocessed data.
 Reads from manifest CSV files.
 """
+import os
 import csv
 from pathlib import Path
 import cv2
@@ -13,14 +14,16 @@ from albumentations.pytorch import ToTensorV2
 
 
 class FoodSeg103Dataset(Dataset):
-    def __init__(self, manifest_path, transform=None, num_classes=104):
+    def __init__(self, manifest_path, data_root=None, transform=None, num_classes=104):
         """
         Args:
             manifest_path: path to manifest_{split}.csv
+            data_root: root directory for data (if paths in manifest are relative)
             transform: albumentations transform
             num_classes: 104 (0=background + 103 food classes)
         """
         self.manifest_path = Path(manifest_path)
+        self.data_root = Path(data_root) if data_root else Path(manifest_path).parent
         self.transform = transform
         self.num_classes = num_classes
         self.samples = []
@@ -28,9 +31,18 @@ class FoodSeg103Dataset(Dataset):
         with open(manifest_path, 'r', encoding='utf-8') as f:
             reader = csv.DictReader(f)
             for row in reader:
+                # If paths are relative, join with data_root
+                img_path = row['image_path']
+                mask_path = row['mask_path']
+                
+                if not os.path.isabs(img_path):
+                    img_path = os.path.join(self.data_root, img_path)
+                if not os.path.isabs(mask_path):
+                    mask_path = os.path.join(self.data_root, mask_path)
+                
                 self.samples.append({
-                    'image': row['image_path'],
-                    'mask': row['mask_path']
+                    'image': img_path,
+                    'mask': mask_path
                 })
     
     def __len__(self):
@@ -83,14 +95,30 @@ class FoodSeg103Dataset(Dataset):
         class_counts = np.zeros(self.num_classes, dtype=np.int64)
         
         from tqdm import tqdm
+        failed_samples = []
+        
         for sample in tqdm(self.samples, desc="Computing class weights"):
             mask = cv2.imread(sample['mask'], cv2.IMREAD_UNCHANGED)
+            
+            # Check if mask was loaded successfully
+            if mask is None:
+                failed_samples.append(sample['mask'])
+                continue
             
             # Count occurrences of each class
             unique, counts = np.unique(mask, return_counts=True)
             for class_id, count in zip(unique, counts):
-                if class_id < self.num_classes:
+                # Check if class_id is valid
+                if class_id is not None and isinstance(class_id, (int, np.integer)) and class_id < self.num_classes:
                     class_counts[class_id] += count
+        
+        # Report failed samples
+        if failed_samples:
+            print(f"\n⚠️  Warning: Failed to load {len(failed_samples)} mask files:")
+            for failed in failed_samples[:5]:  # Show first 5
+                print(f"   - {failed}")
+            if len(failed_samples) > 5:
+                print(f"   ... and {len(failed_samples) - 5} more")
         
         # Calculate weights: inverse frequency
         # Add small epsilon to avoid division by zero
@@ -128,7 +156,7 @@ def get_train_transform(img_size=(512, 512)):
             A.GaussianBlur(blur_limit=(3, 5), p=1.0),
             A.MotionBlur(blur_limit=5, p=1.0),
         ], p=0.3),
-        A.GaussNoise(var_limit=(10.0, 50.0), p=0.2),
+        A.GaussNoise(var_limit=(10.0, 50.0), mean=0, p=0.2),
         # Normalization (ImageNet stats)
         A.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
         ToTensorV2()

@@ -253,10 +253,12 @@ def main():
     print("Loading datasets...")
     train_dataset = FoodSeg103Dataset(
         config.TRAIN_MANIFEST,
+        data_root=config.DATA_ROOT,
         transform=get_train_transform(config.IMG_SIZE)
     )
     val_dataset = FoodSeg103Dataset(
         config.VAL_MANIFEST,
+        data_root=config.DATA_ROOT,
         transform=get_val_transform(config.IMG_SIZE)
     )
     

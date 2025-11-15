@@ -32,6 +32,7 @@ def evaluate_model(checkpoint_path, test_manifest, device='cuda'):
     print(f"\nLoading test dataset...")
     test_dataset = FoodSeg103Dataset(
         test_manifest,
+        data_root=config.DATA_ROOT,
         transform=get_val_transform(config.IMG_SIZE)
     )
     print(f"Test samples: {len(test_dataset)}")
@@ -124,7 +125,7 @@ def visualize_predictions(checkpoint_path, test_manifest, output_dir, num_sample
     os.makedirs(output_dir, exist_ok=True)
     
     # Load dataset (without transform for visualization)
-    test_dataset = FoodSeg103Dataset(test_manifest, transform=None)
+    test_dataset = FoodSeg103Dataset(test_manifest, data_root=config.DATA_ROOT, transform=None)
     
     # Load model
     model = get_model(config.NUM_CLASSES, config.ENCODER, config.ENCODER_WEIGHTS)

@@ -294,7 +294,10 @@ def process_split(split_name, img_list, src_subdir, dst_root, img_size, id_to_in
 
         unique = np.unique(mask_resized)
         labels_seen.update([int(u) for u in unique if u != 0])
-        manifest_rows.append((out_img_path, out_mask_path, img_resized.shape[1], img_resized.shape[0], ';'.join(map(str, unique.tolist()))))
+        # Store relative paths from dst_root
+        rel_img_path = os.path.relpath(out_img_path, dst_root)
+        rel_mask_path = os.path.relpath(out_mask_path, dst_root)
+        manifest_rows.append((rel_img_path, rel_mask_path, img_resized.shape[1], img_resized.shape[0], ';'.join(map(str, unique.tolist()))))
         processed += 1
 
     # Write manifest
