@@ -16,6 +16,14 @@ import torch.optim as optim
 from torch.utils.data import DataLoader
 import segmentation_models_pytorch as smp
 
+# Try importing new AMP API (torch 2.0+), fallback to old API
+try:
+    from torch.amp import autocast, GradScaler
+    AMP_NEW_API = True
+except ImportError:
+    from torch.cuda.amp import autocast, GradScaler
+    AMP_NEW_API = False
+
 import config
 from dataset import FoodSeg103Dataset, get_train_transform, get_val_transform
 
@@ -124,15 +132,21 @@ def get_metrics():
     }
 
 
-def train_epoch(model, dataloader, criterion, optimizer, metrics, device, use_amp=False):
+def train_epoch(model, dataloader, criterion, optimizer, metrics, device, use_amp=False, amp_device='cuda'):
     """Train for one epoch with optional mixed precision"""
     model.train()
     
     epoch_loss = 0.0
     metric_values = {name: 0.0 for name in metrics.keys()}
     
-    # Mixed precision scaler
-    scaler = torch.cuda.amp.GradScaler() if use_amp else None
+    # Mixed precision scaler - use new API if available
+    if use_amp:
+        if AMP_NEW_API:
+            scaler = GradScaler(amp_device)
+        else:
+            scaler = GradScaler()
+    else:
+        scaler = None
     
     pbar = tqdm(dataloader, desc="Training")
     for batch_idx, (images, masks) in enumerate(pbar):
@@ -143,9 +157,15 @@ def train_epoch(model, dataloader, criterion, optimizer, metrics, device, use_am
         
         # Forward pass with automatic mixed precision
         if use_amp:
-            with torch.cuda.amp.autocast():
-                outputs = model(images)
-                loss = criterion(outputs, masks)
+            # Use new API or old API based on availability
+            if AMP_NEW_API:
+                with autocast(amp_device):
+                    outputs = model(images)
+                    loss = criterion(outputs, masks)
+            else:
+                with autocast():
+                    outputs = model(images)
+                    loss = criterion(outputs, masks)
             
             # Backward pass with scaled gradients
             scaler.scale(loss).backward()
@@ -338,14 +358,32 @@ def main():
     # Enable mixed precision training ONLY on GPU with CUDA
     # Disable completely on CPU to avoid engine errors
     use_amp = False
+    amp_device = 'cuda'
+    
     if torch.cuda.is_available() and device.type == 'cuda':
         try:
-            # Test if AMP is actually available
-            test_scaler = torch.cuda.amp.GradScaler()
+            # Test if AMP is actually available with a simple backward pass
+            test_x = torch.randn(2, 2, device='cuda', requires_grad=True)
+            test_loss = (test_x ** 2).sum()
+            
+            if AMP_NEW_API:
+                test_scaler = GradScaler('cuda')
+                with autocast('cuda'):
+                    test_y = (test_x ** 2).sum()
+                test_scaler.scale(test_y).backward()
+                print(f"✓ Mixed precision training enabled (new API)")
+            else:
+                test_scaler = GradScaler()
+                with autocast():
+                    test_y = (test_x ** 2).sum()
+                test_scaler.scale(test_y).backward()
+                print(f"✓ Mixed precision training enabled (old API)")
+            
             use_amp = True
-            print("✓ Mixed precision training enabled (faster on GPU)")
+            
         except Exception as e:
-            print(f"⚠️  Mixed precision not available: {e}")
+            print(f"⚠️  Mixed precision test failed: {e}")
+            print(f"⚠️  Falling back to FP32 training (slower but stable)")
             use_amp = False
     else:
         print("⚠️  Mixed precision disabled (CPU mode)")
@@ -371,7 +409,7 @@ def main():
         print("-" * 80)
         
         # Train
-        train_loss, train_metrics = train_epoch(model, train_loader, criterion, optimizer, metrics, device, use_amp)
+        train_loss, train_metrics = train_epoch(model, train_loader, criterion, optimizer, metrics, device, use_amp, amp_device)
         
         # Validate
         val_loss, val_metrics = validate_epoch(model, val_loader, criterion, metrics, device)

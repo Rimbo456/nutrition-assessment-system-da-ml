@@ -17,21 +17,31 @@ cd D:\Temp\project\segmentation
 pip uninstall torch torchvision torchaudio -y
 ```
 
-### Step 3: Check if you have GPU
+### Step 3: Diagnose the exact issue
 ```powershell
-nvidia-smi
+python diagnose_cuda.py
 ```
 
+This will tell you exactly what's wrong and provide specific fix commands.
+
+### Step 3b: Install correct PyTorch version
+
 **If nvidia-smi works (shows GPU info):**
+
+**Option A - Try latest stable version first:**
 ```powershell
-# Install CUDA 11.8 version (most compatible)
-pip install torch torchvision --index-url https://download.pytorch.org/whl/cu118
+pip install torch==2.1.0 torchvision==0.16.0 --index-url https://download.pytorch.org/whl/cu118
+```
+
+**Option B - If still getting "GET engine" error, use older stable version:**
+```powershell
+pip install torch==2.0.1 torchvision==0.15.2 --index-url https://download.pytorch.org/whl/cu118
 ```
 
 **If nvidia-smi doesn't work (no GPU):**
 ```powershell
 # Install CPU-only version
-pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
+pip install torch==2.1.0 torchvision==0.16.0 --index-url https://download.pytorch.org/whl/cpu
 ```
 
 ### Step 4: Install other dependencies
@@ -39,19 +49,29 @@ pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
 pip install -r requirements.txt
 ```
 
-### Step 5: Verify installation
+### Step 5: Verify installation with GET engine test
 ```powershell
-python check_installation.py
+python diagnose_cuda.py
 ```
 
 **Expected output (GPU):**
 ```
 ✅ PyTorch imported successfully
-   Version: 2.x.x+cu118
+   Version: 2.1.0+cu118
 ✅ CUDA available: True
-✅ CPU tensor operations: OK
-✅ CPU backward pass: OK
-✅ CUDA tensor operations: OK
+✅ CPU backward: OK
+✅ CUDA backward: OK
+✅ AMP (new API): OK
+✅ GET engine test: PASSED
+```
+
+**If you see "GET engine ERROR CONFIRMED":**
+```powershell
+# Use the specific fix command shown in diagnose_cuda.py output
+# Usually:
+pip uninstall torch torchvision -y
+pip cache purge
+pip install torch==2.0.1 torchvision==0.15.2 --index-url https://download.pytorch.org/whl/cu118
 ```
 
 **Expected output (CPU):**
@@ -75,12 +95,21 @@ python train.py
 
 ## 📊 What to Expect
 
-### With GPU (CUDA)
+### With GPU (CUDA) - Normal
 ```
 Using device: cuda (GPU: NVIDIA GeForce RTX 3060)
-✓ Mixed precision training enabled (faster on GPU)
+✓ Mixed precision training enabled (new API)
 Training: 100%|████████| 265/265 [02:30<00:00]  # ~2-3 minutes per epoch
 ```
+
+### With GPU (CUDA) - Fallback Mode (if AMP fails)
+```
+Using device: cuda (GPU: NVIDIA GeForce RTX 3060)
+⚠️  Mixed precision test failed: ...
+⚠️  Falling back to FP32 training (slower but stable)
+Training: 100%|████████| 265/265 [03:30<00:00]  # ~3-4 minutes per epoch
+```
+This is OK! Training will work, just a bit slower.
 
 ### With CPU
 ```
