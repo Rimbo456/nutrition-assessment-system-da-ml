@@ -13,9 +13,10 @@ import csv
 from collections import defaultdict
 
 
-# Default parameters
-DEFAULT_SRC = r'D:\Dev\University\KLTN\foodseg103'
-DEFAULT_DST = r'D:\Dev\University\KLTN\project\data\foodseg103'
+# Default parameters - relative paths
+PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+DEFAULT_SRC = os.path.join(os.path.dirname(PROJECT_ROOT), 'foodseg103')
+DEFAULT_DST = os.path.join(PROJECT_ROOT, 'data', 'foodseg103')
 DEFAULT_IMG_SIZE = (512, 512)
 
 

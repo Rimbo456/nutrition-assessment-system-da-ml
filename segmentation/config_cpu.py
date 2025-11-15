@@ -3,13 +3,16 @@ Training configuration for CPU (reduced settings for testing)
 Copy this to config.py if you want to train on CPU
 """
 
-# Paths
-DATA_ROOT = r"D:\Dev\University\KLTN\project\data\foodseg103"
-TRAIN_MANIFEST = f"{DATA_ROOT}/manifest_train.csv"
-VAL_MANIFEST = f"{DATA_ROOT}/manifest_val.csv"
-TEST_MANIFEST = f"{DATA_ROOT}/manifest_test.csv"
-CHECKPOINT_DIR = r"D:\Dev\University\KLTN\project\checkpoints"
-LOG_DIR = r"D:\Dev\University\KLTN\project\logs"
+import os
+
+# Paths - relative to project root
+PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+DATA_ROOT = os.path.join(PROJECT_ROOT, "data", "foodseg103")
+TRAIN_MANIFEST = os.path.join(DATA_ROOT, "manifest_train.csv")
+VAL_MANIFEST = os.path.join(DATA_ROOT, "manifest_val.csv")
+TEST_MANIFEST = os.path.join(DATA_ROOT, "manifest_test.csv")
+CHECKPOINT_DIR = os.path.join(PROJECT_ROOT, "checkpoints")
+LOG_DIR = os.path.join(PROJECT_ROOT, "logs")
 
 # Model - Use lighter architecture for CPU
 MODEL_NAME = "U-Net"  # U-Net is faster than DeepLabV3+

@@ -1,9 +1,12 @@
 import csv
+import os
 from pathlib import Path
 import numpy as np
 import cv2
 
-base = Path(r"D:\Dev\University\KLTN\project\data\foodseg103")
+# Relative path to project root
+project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+base = Path(os.path.join(project_root, "data", "foodseg103"))
 
 for split in ('train','val','test'):
     manifest = base / f'manifest_{split}.csv'

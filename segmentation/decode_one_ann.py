@@ -1,10 +1,11 @@
 """
 Decode bitmap(s) inside one annotation JSON and save decoded bitmaps (or base64 text) for inspection.
 Usage:
-  python project\decode_one_ann.py --ann "D:\...\00000380.jpg.json" --out D:\temp\fs_debug_single
+  python project\decode_one_ann.py --ann "path/to/00000380.jpg.json" --out output_dir
 
 This script does NOT modify dataset; it only writes debug outputs.
 """
+import os
 import argparse
 import json
 import base64
@@ -16,11 +17,16 @@ import numpy as np
 
 
 def parse_args():
+    # Get default paths relative to project
+    project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    default_ann = os.path.join(os.path.dirname(project_root), "foodseg103", "train", "ann", "00000380.jpg.json")
+    default_out = os.path.join(project_root, "temp", "fs_debug_single")
+    
     p = argparse.ArgumentParser(description='Decode bitmap entries from one annotation JSON')
     p.add_argument('--ann', type=str, required=False,
-                   default=r"D:\Dev\University\KLTN\foodseg103\train\ann\00000380.jpg.json",
+                   default=default_ann,
                    help='Path to annotation JSON file')
-    p.add_argument('--out', type=str, required=False, default=r"D:\temp\fs_debug_single",
+    p.add_argument('--out', type=str, required=False, default=default_out,
                    help='Directory to save decoded bitmaps / b64 text')
     return p.parse_args()
 

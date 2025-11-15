@@ -236,11 +236,13 @@ if __name__ == "__main__":
     print("DEMO: Input/Output của Model Semantic Segmentation")
     print("=" * 80)
     
-    # Paths
-    checkpoint_path = r"D:\Dev\University\KLTN\project\checkpoints\best_model.pth"
-    test_image = r"D:\Dev\University\KLTN\project\data\foodseg103\images\test\000001.jpg"
-    class_map_path = r"D:\Dev\University\KLTN\project\data\foodseg103\class_map.json"
-    output_vis = r"D:\Dev\University\KLTN\project\prediction_demo.jpg"
+    # Paths - relative to project root
+    import os
+    project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    checkpoint_path = os.path.join(project_root, "checkpoints", "best_model.pth")
+    test_image = os.path.join(project_root, "data", "foodseg103", "images", "test", "000001.jpg")
+    class_map_path = os.path.join(project_root, "data", "foodseg103", "class_map.json")
+    output_vis = os.path.join(project_root, "prediction_demo.jpg")
     
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     print(f"\nUsing device: {device}\n")

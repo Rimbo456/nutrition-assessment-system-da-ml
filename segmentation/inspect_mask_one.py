@@ -1,10 +1,11 @@
 """
 Create a visual overlay between an original image and a decoded bitmap (mask).
 Usage:
-  python project\inspect_mask_one.py --img "...\img\00000380.jpg" --bitmap "D:\temp\fs_debug_single\00000380.jpg_obj0.png" --out "D:\temp\fs_debug_single\overlay.png"
+  python project\inspect_mask_one.py --img "path/to/img.jpg" --bitmap "path/to/bitmap.png" --out "output.png"
 
 This helps verify origin placement and mask shape.
 """
+import os
 import argparse
 from pathlib import Path
 import cv2
@@ -12,11 +13,15 @@ import numpy as np
 
 
 def parse_args():
+    # Default output path relative to project
+    project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    default_out = os.path.join(project_root, "temp", "fs_debug_single", "overlay.png")
+    
     p = argparse.ArgumentParser(description='Inspect one decoded bitmap overlayed on original image')
     p.add_argument('--img', type=str, required=True, help='Path to original image')
     p.add_argument('--bitmap', type=str, required=True, help='Path to decoded bitmap PNG (may have alpha)')
     p.add_argument('--origin', type=int, nargs=2, required=False, help='Origin (x y) where bitmap should be placed on the image')
-    p.add_argument('--out', type=str, required=False, default=r"D:\temp\fs_debug_single\overlay.png", help='Output overlay path')
+    p.add_argument('--out', type=str, required=False, default=default_out, help='Output overlay path')
     return p.parse_args()
 
 
