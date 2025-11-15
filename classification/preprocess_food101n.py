@@ -37,13 +37,23 @@ class Food101NPreprocessor:
     """
     
     def __init__(self, 
-                 source_dir='d:/Dev/University/KLTN/food-101N',
-                 output_dir='d:/Dev/University/KLTN/project/data/food-101N'):
+                 source_dir=None,
+                 output_dir=None):
         """
         Args:
-            source_dir: Thư mục chứa dataset gốc
-            output_dir: Thư mục lưu dữ liệu đã preprocess
+            source_dir: Thư mục chứa dataset gốc (None = tự động tìm)
+            output_dir: Thư mục lưu dữ liệu đã preprocess (None = tự động tìm)
         """
+        # Tự động xác định paths dựa trên vị trí script
+        script_dir = Path(__file__).parent  # classification/
+        project_root = script_dir.parent  # project/
+        kltn_root = project_root.parent  # KLTN/
+        
+        if source_dir is None:
+            source_dir = kltn_root / 'food-101N'
+        if output_dir is None:
+            output_dir = project_root / 'data' / 'food-101N'
+            
         self.source_dir = Path(source_dir)
         self.output_dir = Path(output_dir)
         
@@ -496,11 +506,8 @@ class Food101NPreprocessor:
 # ============================================================================
 
 if __name__ == "__main__":
-    # Khởi tạo preprocessor với đường dẫn mới
-    preprocessor = Food101NPreprocessor(
-        source_dir='d:/Dev/University/KLTN/food-101N',
-        output_dir='d:/Dev/University/KLTN/project/data/food-101N'
-    )
+    # Khởi tạo preprocessor (sử dụng relative paths tự động)
+    preprocessor = Food101NPreprocessor()
     
     # Chạy full pipeline
     preprocessor.run_full_pipeline()

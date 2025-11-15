@@ -59,7 +59,9 @@ KLTN/
 ### Bước 1: Cài đặt dependencies
 
 ```bash
-cd d:\Dev\University\KLTN
+# Di chuyển vào thư mục classification
+cd project/classification
+
 pip install torch torchvision
 pip install opencv-python pillow
 pip install albumentations
@@ -68,12 +70,16 @@ pip install tqdm numpy
 
 ### Bước 2: Preprocessing Dataset
 
-Chạy script tiền xử lý:
+Chạy script tiền xử lý (tự động tìm đường dẫn):
 
 ```bash
-cd d:\Dev\University\KLTN\project\classification
+# Đảm bảo bạn đang ở thư mục project/classification
 python preprocess_food101n.py
 ```
+
+**Lưu ý**: Script sẽ tự động tìm:
+- Dataset gốc: `../../food-101N/`
+- Output: `../data/food-101N/`
 
 **Script sẽ:**
 1. ✅ Load 101 classes từ `meta/classes.txt`
@@ -279,18 +285,23 @@ USE_AMP = True         # Mixed precision
 
 ```python
 from dataset_food101n import Food101NDataset
+from pathlib import Path
 import matplotlib.pyplot as plt
 import torch
 import json
 
+# Tự động tìm đường dẫn
+script_dir = Path(__file__).parent
+data_dir = script_dir.parent / 'data' / 'food-101N'
+
 # Load dataset
 dataset = Food101NDataset(
-    data_json_path='../data/food-101N/train_clean.json',
+    data_json_path=data_dir / 'train_clean.json',
     is_train=False  # No augmentation
 )
 
 # Load class map
-with open('../data/food-101N/class_map.json', 'r') as f:
+with open(data_dir / 'class_map.json', 'r') as f:
     class_map = json.load(f)
 
 # Get 1 sample
@@ -313,9 +324,9 @@ plt.show()
 ```python
 from dataset_food101n import create_dataloaders
 
-# Tạo dataloaders
+# Tạo dataloaders (tự động tìm đường dẫn)
 train_loader, val_loader, class_map = create_dataloaders(
-    data_dir='../data/food-101N',
+    data_dir=None,  # Tự động: ../data/food-101N
     train_json='train_clean.json',
     val_json='val_clean.json',
     batch_size=16,
@@ -453,6 +464,7 @@ pip install pillow
 - Scripts nằm trong `KLTN/project/classification/`
 - **KHÔNG** copy ảnh - chỉ lưu paths trong JSON
 - Preprocessing on-the-fly trong Dataset class
+- **Tất cả paths sử dụng relative paths** - dễ dàng chuyển máy
 
 ---
 

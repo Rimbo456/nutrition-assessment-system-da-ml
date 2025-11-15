@@ -152,7 +152,7 @@ class Food101NDataset(Dataset):
 
 
 def create_dataloaders(
-    data_dir='d:/Dev/University/KLTN/project/data/food-101N',
+    data_dir=None,
     train_json='train_clean.json',
     val_json='val_clean.json',
     batch_size=16,
@@ -164,7 +164,7 @@ def create_dataloaders(
     Tạo train và validation DataLoaders
     
     Args:
-        data_dir: Thư mục chứa data JSON files
+        data_dir: Thư mục chứa data JSON files (None = tự động tìm)
         train_json: Tên file JSON cho train (train_clean.json hoặc train_all.json)
         val_json: Tên file JSON cho val (val_clean.json hoặc val_all.json)
         batch_size: Batch size
@@ -175,7 +175,13 @@ def create_dataloaders(
     Returns:
         train_loader, val_loader, class_map
     """
-    data_dir = Path(data_dir)
+    # Tự động xác định data_dir nếu không được cung cấp
+    if data_dir is None:
+        script_dir = Path(__file__).parent  # classification/
+        project_root = script_dir.parent  # project/
+        data_dir = project_root / 'data' / 'food-101N'
+    else:
+        data_dir = Path(data_dir)
     
     print("=" * 80)
     print("Creating DataLoaders")
@@ -239,12 +245,9 @@ if __name__ == "__main__":
     print("DEMO: Food-101N Dataset Class")
     print("=" * 80)
     
-    # Paths
-    data_dir = 'd:/Dev/University/KLTN/project/data/food-101N'
-    
-    # Tạo dataloaders
+    # Tạo dataloaders (sử dụng relative paths tự động)
     train_loader, val_loader, class_map = create_dataloaders(
-        data_dir=data_dir,
+        data_dir=None,  # Tự động tìm
         train_json='train_clean.json',  # Dùng clean data
         val_json='val_clean.json',
         batch_size=8,
