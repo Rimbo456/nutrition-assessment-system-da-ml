@@ -105,18 +105,41 @@ class Food101NPreprocessor:
     
     def _get_relative_path(self, full_path):
         """
-        Convert absolute path thành relative path từ output_dir
+        Convert absolute path thành relative path chuẩn
         
-        VD: d:/KLTN/food-101N/images/apple_pie/xxx.jpg
-        -> ../../food-101N/images/apple_pie/xxx.jpg
+        Từ: /path/to/KLTN/food-101N/images/class/image.jpg
+        Thành: ../../../food-101N/images/class/image.jpg
+        
+        Logic: Từ project/data/food-101N/ lên 3 cấp về KLTN/, rồi vào food-101N/images/
         """
         try:
             full_path = Path(full_path)
-            # Tính relative path từ output_dir đến image
-            rel_path = os.path.relpath(full_path, self.output_dir)
-            return rel_path
-        except:
-            # Fallback: trả về absolute path nếu không convert được
+            
+            # Lấy phần path từ food-101N/ trở đi
+            # VD: food-101N/images/apple_pie/xxx.jpg
+            parts = full_path.parts
+            
+            # Tìm index của 'food-101N' trong path
+            if 'food-101N' in parts:
+                food101n_idx = parts.index('food-101N')
+                # Lấy từ food-101N trở đi
+                relative_parts = parts[food101n_idx:]
+                
+                # Tạo relative path: ../../../food-101N/images/...
+                # Từ project/data/food-101N/ cần lên 3 cấp: ../../../
+                rel_path = os.path.join('..', '..', '..', *relative_parts)
+                
+                # Normalize slashes cho cross-platform
+                rel_path = rel_path.replace('\\', '/')
+                
+                return rel_path
+            else:
+                # Fallback: không tìm thấy food-101N trong path
+                print(f"  ⚠️  Warning: 'food-101N' not found in path {full_path}")
+                return str(full_path)
+                
+        except Exception as e:
+            print(f"  ⚠️  Error converting path {full_path}: {e}")
             return str(full_path)
     
     def load_verified_data(self):

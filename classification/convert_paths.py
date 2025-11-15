@@ -12,9 +12,12 @@ def convert_to_relative_paths(json_path, base_dir):
     """
     Convert absolute paths trong JSON file thành relative paths
     
+    Từ: D:/path/to/KLTN/food-101N/images/class/image.jpg
+    Thành: ../../../food-101N/images/class/image.jpg
+    
     Args:
-        json_path: Đường dẫn đến JSON file
-        base_dir: Base directory (thư mục chứa JSON file)
+        json_path: Đường dẫn đến JSON file (trong data/food-101N/)
+        base_dir: Base directory (data/food-101N/)
     """
     print(f"\n📄 Converting {json_path.name}...")
     
@@ -24,18 +27,37 @@ def convert_to_relative_paths(json_path, base_dir):
     
     # Convert paths
     converted = 0
+    skipped = 0
+    
     for item in data:
         old_path = item['image_path']
         
         # Nếu đã là relative path thì skip
         if not Path(old_path).is_absolute():
+            skipped += 1
             continue
         
         # Convert to relative path
         try:
-            rel_path = os.path.relpath(old_path, base_dir)
-            item['image_path'] = rel_path
-            converted += 1
+            path_obj = Path(old_path)
+            parts = path_obj.parts
+            
+            # Tìm 'food-101N' trong path
+            if 'food-101N' in parts:
+                food101n_idx = parts.index('food-101N')
+                relative_parts = parts[food101n_idx:]
+                
+                # Tạo relative path: ../../../food-101N/images/...
+                rel_path = os.path.join('..', '..', '..', *relative_parts)
+                
+                # Normalize slashes
+                rel_path = rel_path.replace('\\', '/')
+                
+                item['image_path'] = rel_path
+                converted += 1
+            else:
+                print(f"  ⚠️  Cannot find 'food-101N' in {old_path}")
+                
         except Exception as e:
             print(f"  ⚠️  Cannot convert {old_path}: {e}")
     
@@ -43,7 +65,7 @@ def convert_to_relative_paths(json_path, base_dir):
     with open(json_path, 'w', encoding='utf-8') as f:
         json.dump(data, f, indent=2, ensure_ascii=False)
     
-    print(f"  ✅ Converted {converted}/{len(data)} paths")
+    print(f"  ✅ Converted: {converted}, Skipped: {skipped}, Total: {len(data)}")
     
     # Show sample
     if len(data) > 0:
